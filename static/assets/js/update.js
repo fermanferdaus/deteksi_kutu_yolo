@@ -1,6 +1,6 @@
 function updateElement(url, elementId, formatData) {
     const element = document.getElementById(elementId);
-    element.classList.remove('loaded'); // Opsional efek loading (tambahkan CSS kalau mau)
+    element.classList.remove('loaded'); 
 
     fetch(url)
         .then(response => response.json())
