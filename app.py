@@ -24,7 +24,7 @@ model = YOLO("model.pt")
 cap1 = cv2.VideoCapture(0)
 cap2 = cv2.VideoCapture(1)
 
-threshold = 0.6
+threshold = 0.7
 
 # === DETEKSI (TANPA KIRIM SERIAL) ===
 def detect_and_send(frame, cam_id):
@@ -127,7 +127,7 @@ def kontrol():
 
 @app.route('/profile')
 def profile():
-    return render_template('users-profile.html')
+    return render_template('user-profile.html')
 
 @app.route('/video1')
 def video1():

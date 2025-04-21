@@ -97,22 +97,28 @@
     </div><!-- End Page Title -->
 
     <div class="container mt-5">
-      <h2>Kontrol Lampu</h2>
-      <div class="d-flex align-items-center">
-        <label class="switch">
-          <input type="checkbox" id="lampuSwitch" onchange="toggleLampu()">
-          <span class="slider"></span>
-        </label>
-        <span class="lamp-status" id="lampuStatus">OFF</span>
+      <div class="card shadow-sm border-0 rounded-4">
+        <div class="card-body">
+          <h5 class="card-title fw-bold">
+            Kontrol Lampu <i class="bi bi-lightbulb text-warning"></i>
+          </h5>
+          <div class="d-flex align-items-center gap-3">
+            <label class="switch">
+              <input type="checkbox" id="lampuSwitch" onchange="toggleLampu()">
+              <span class="slider"></span>
+            </label>
+            <span class="fw-bold" id="lampuStatus">OFF</span>
+          </div>
+        </div>
       </div>
-    </div>
+    </div>    
 
   </main><!-- End #main -->
 
   <!-- ======= Footer ======= -->
   <footer id="footer" class="footer">
     <div class="copyright">
-      &copy; Copyright <strong><span>CoE Agriculture</span></strong>. All Rights Reserved
+      &copy; Copyright <strong><span>CoE Smart Agriculture</span></strong>. All Rights Reserved
     </div>
   </footer><!-- End Footer -->
 
