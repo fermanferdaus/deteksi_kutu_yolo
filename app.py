@@ -6,7 +6,7 @@ import serial
 import threading
 
 app = Flask(__name__)
-arduino = serial.Serial('COM4', 9600)
+arduino = serial.Serial('COM3', 9600)
 time.sleep(2)
 
 # === GLOBAL ===
@@ -23,6 +23,7 @@ sensor_data = {
 model = YOLO("model.pt")
 cap1 = cv2.VideoCapture(0)
 cap2 = cv2.VideoCapture(1)
+
 threshold = 0.6
 
 # === DETEKSI (TANPA KIRIM SERIAL) ===

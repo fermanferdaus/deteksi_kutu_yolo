@@ -53,6 +53,20 @@ function updateStatus(){
     updateElement('/status_deteksi_kutu', 'kutu2', formatKutuKamera2);
 }
 
+// Fungsi untuk toggle status lampu
+function toggleLampu() {
+    const switchButton = document.getElementById('lampuSwitch');
+    const lampuStatus = document.getElementById('lampuStatus');
+
+    if (switchButton.checked) {
+        lampuStatus.textContent = 'ON';
+        fetch('/lampu/on', { method: 'POST' }); 
+    } else {
+        lampuStatus.textContent = 'OFF';
+        fetch('/lampu/off', { method: 'POST' });
+    }
+}
+
 updateSensor();
 setInterval(updateSensor, 5000);
 
