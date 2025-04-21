@@ -6,7 +6,7 @@ import serial
 import threading
 
 app = Flask(__name__)
-arduino = serial.Serial('COM3', 9600)
+arduino = serial.Serial('COM5', 9600)
 time.sleep(2)
 
 # === GLOBAL ===
@@ -95,14 +95,12 @@ def read_serial_data():
                 line = arduino.readline().decode('utf-8').strip()
                 if line.startswith("S:") and ",H:" in line and ",DS:" in line and ",PPM:" in line:
                     try:
-                        parts = line.replace("S:", "").split(",H:")
-                        suhu_ruang = parts[0]
-                        rest = parts[1].split(",DS:")
-                        kelembaban = rest[0]
-                        rest2 = rest[1].split(",PPM:")
-                        suhu_air = rest2[0]
-                        ppm = rest2[1]
+                        suhu_ruang = line.split("S:")[1].split(",H:")[0]
+                        kelembaban = line.split(",H:")[1].split(",DS:")[0]
+                        suhu_air = line.split(",DS:")[1].split(",PPM:")[0]
+                        ppm = line.split(",PPM:")[1]
 
+                        # Langsung update ke UI, meskipun nan
                         sensor_data["suhu_ruang"] = suhu_ruang
                         sensor_data["kelembaban"] = kelembaban
                         sensor_data["suhu_air"] = suhu_air
@@ -146,6 +144,18 @@ def get_sensor_data():
 @app.route('/status_deteksi_kutu')
 def status_deteksi_kutu():
     return jsonify(deteksi_kutu)
+
+@app.route('/lampu/on', methods=['POST'])
+def lampu_on():
+    arduino.write(b'L1')
+    print("[Lampu] Relay dinyalakan")
+    return jsonify({"status": "on"})
+
+@app.route('/lampu/off', methods=['POST'])
+def lampu_off():
+    arduino.write(b'L0')
+    print("[Lampu] Relay dimatikan")
+    return jsonify({"status": "off"})
 
 # === JALANKAN APP ===
 if __name__ == '__main__':
