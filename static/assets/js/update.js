@@ -53,22 +53,39 @@ function updateStatus(){
     updateElement('/status_deteksi_kutu', 'kutu2', formatKutuKamera2);
 }
 
-// Fungsi untuk toggle status lampu
-function toggleLampu() {
-    const switchButton = document.getElementById('lampuSwitch');
-    const lampuStatus = document.getElementById('lampuStatus');
-
-    if (switchButton.checked) {
-        lampuStatus.textContent = 'ON';
-        fetch('/lampu/on', { method: 'POST' }); 
-    } else {
-        lampuStatus.textContent = 'OFF';
-        fetch('/lampu/off', { method: 'POST' });
-    }
-}
-
 updateSensor();
 setInterval(updateSensor, 5000);
 
 updateStatus();
 setInterval(updateStatus, 1000);
+
+// Fungsi untuk toggle status lampu
+function toggleLampu() {
+    const switchButton = document.getElementById('lampuSwitch');
+
+    const url = switchButton.checked ? '/lampu/on' : '/lampu/off';
+
+    fetch(url, { method: 'POST' })
+        .then(() => {
+            // Tunggu respons lalu update ulang status
+            setTimeout(syncLampuSwitch, 100); // beri delay 100ms untuk update server
+        });
+}
+
+function syncLampuSwitch() {
+    fetch('/lampu/status')
+        .then(res => res.json())
+        .then(data => {
+            const status = data.status;
+            const switchBtn = document.getElementById('lampuSwitch');
+            const lampuStatus = document.getElementById('lampuStatus');
+
+            switchBtn.checked = status === 1;
+            lampuStatus.textContent = status === 1 ? "ON" : "OFF";
+        });
+}
+
+syncLampuSwitch();
+
+setInterval(syncLampuSwitch, 1000);
+

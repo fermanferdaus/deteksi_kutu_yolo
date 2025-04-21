@@ -6,7 +6,7 @@ import serial
 import threading
 
 app = Flask(__name__)
-arduino = serial.Serial('COM5', 9600)
+arduino = serial.Serial('/dev/ttyUSB0', 9600)
 time.sleep(2)
 
 # === GLOBAL ===
@@ -20,9 +20,24 @@ sensor_data = {
     "suhu_air": "---",
     "ppm": "---"
 }
+status_lampu = {"status": 0}  # 0 = OFF, 1 = ON
+
 model = YOLO("model.pt")
 cap1 = cv2.VideoCapture(0)
 cap2 = cv2.VideoCapture(1)
+
+# Periksa apakah kamera berhasil dibuka
+if not cap1.isOpened():
+    print("[Camera] Kamera 1 (index 0) tidak tersedia")
+    cap1 = None
+else:
+    print("[Camera] Kamera 1 aktif")
+
+if not cap2.isOpened():
+    print("[Camera] Kamera 2 (index 1) tidak tersedia")
+    cap2 = None
+else:
+    print("[Camera] Kamera 2 aktif")
 
 threshold = 0.7
 
@@ -76,6 +91,8 @@ def kontrol_relay():
 # === STREAM KAMERA ===
 def gen_frames(cam, cam_id):
     while True:
+        if cam is None:
+            break
         success, frame = cam.read()
         if not success:
             break
@@ -117,6 +134,20 @@ threading.Thread(target=read_serial_data, daemon=True).start()
 threading.Thread(target=kontrol_relay, daemon=True).start()
 
 # === ROUTES ===
+@app.route('/video1')
+def video1():
+    if cap1 is not None:
+        return Response(gen_frames(cap1, 1), mimetype='multipart/x-mixed-replace; boundary=frame')
+    else:
+        return "Kamera 1 tidak tersedia", 503
+
+@app.route('/video2')
+def video2():
+    if cap2 is not None:
+        return Response(gen_frames(cap2, 2), mimetype='multipart/x-mixed-replace; boundary=frame')
+    else:
+        return "Kamera 2 tidak tersedia", 503
+
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -129,14 +160,6 @@ def kontrol():
 def profile():
     return render_template('user-profile.html')
 
-@app.route('/video1')
-def video1():
-    return Response(gen_frames(cap1, 1), mimetype='multipart/x-mixed-replace; boundary=frame')
-
-@app.route('/video2')
-def video2():
-    return Response(gen_frames(cap2, 2), mimetype='multipart/x-mixed-replace; boundary=frame')
-
 @app.route('/sensor_data')
 def get_sensor_data():
     return jsonify(sensor_data)
@@ -145,15 +168,21 @@ def get_sensor_data():
 def status_deteksi_kutu():
     return jsonify(deteksi_kutu)
 
+@app.route('/lampu/status')
+def lampu_status():
+    return jsonify(status_lampu)
+
 @app.route('/lampu/on', methods=['POST'])
 def lampu_on():
     arduino.write(b'L1')
+    status_lampu["status"] = 1
     print("[Lampu] Relay dinyalakan")
     return jsonify({"status": "on"})
 
 @app.route('/lampu/off', methods=['POST'])
 def lampu_off():
     arduino.write(b'L0')
+    status_lampu["status"] = 0
     print("[Lampu] Relay dimatikan")
     return jsonify({"status": "off"})
 

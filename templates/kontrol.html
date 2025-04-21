@@ -138,6 +138,13 @@
   <script src="{{ url_for('static', filename='assets/js/main.js') }}"></script>
   <script src="{{ url_for('static', filename='assets/js/update.js') }}"></script>
 
+  <script>
+    window.addEventListener("DOMContentLoaded", () => {
+      syncLampuSwitch();  // panggil langsung saat DOM siap
+      setInterval(syncLampuSwitch, 1000);  // sync tiap detik
+    });
+  </script>  
+
 </body>
 
 </html>
