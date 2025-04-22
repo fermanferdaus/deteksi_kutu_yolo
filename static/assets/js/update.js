@@ -89,3 +89,9 @@ syncLampuSwitch();
 
 setInterval(syncLampuSwitch, 1000);
 
+function showPreview(src) {
+    const previewImage = document.getElementById('previewImage');
+    previewImage.src = src;
+    const modal = new bootstrap.Modal(document.getElementById('imagePreviewModal'));
+    modal.show();
+  }

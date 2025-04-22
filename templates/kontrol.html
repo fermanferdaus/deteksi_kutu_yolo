@@ -10,7 +10,7 @@
   <meta content="" name="keywords">
 
   <!-- Favicons -->
-  <link href="{{ url_for('static', filename='assets/img/favicon.png') }}" rel="icon">
+  <link href="{{ url_for('static', filename='assets/img/coe.png') }}" rel="icon">
   <link href="{{ url_for('static', filename='assets/img/apple-touch-icon.png') }}" rel="apple-touch-icon">
 
   <!-- Vendor CSS Files -->
@@ -27,14 +27,14 @@
   <header id="header" class="header fixed-top d-flex align-items-center">
     <div class="d-flex align-items-center justify-content-between">
       <a href="{{ url_for('index') }}" class="logo d-flex align-items-center">
-        <img src="{{ url_for('static', filename='assets/img/logo.png') }}" alt="">
+        <img src="{{ url_for('static', filename='assets/img/coe.png') }}" alt="">
         <span class="d-none d-lg-block">Kontrol</span>
       </a>
       <i class="bi bi-list toggle-sidebar-btn"></i>
     </div><!-- End Logo -->
 
     <div class="search-bar">
-      <form class="search-form d-flex align-items-center" method="POST" action="#">
+      <form class="search-form d-flex align-items-center" method="GET" action="{{ request.path }}">
         <input type="text" name="query" placeholder="Search" title="Enter search keyword">
         <button type="submit" title="Search"><i class="bi bi-search"></i></button>
       </form>
@@ -71,6 +71,14 @@
           <span>Kontrol</span>
         </a>
       </li>
+
+      <li class="nav-item">
+        <a class="nav-link collapsed" href="{{ url_for('riwayat') }}">
+          <i class="bi bi-journal-text"></i>
+          <span>Riwayat Deteksi</span>
+        </a>
+      </li>
+
 
       <li class="nav-heading">Pages</li>
 
@@ -137,14 +145,14 @@
   <!-- Template Main JS File -->
   <script src="{{ url_for('static', filename='assets/js/main.js') }}"></script>
   <script src="{{ url_for('static', filename='assets/js/update.js') }}"></script>
-
+  
   <script>
     window.addEventListener("DOMContentLoaded", () => {
       syncLampuSwitch();  // panggil langsung saat DOM siap
       setInterval(syncLampuSwitch, 1000);  // sync tiap detik
     });
-  </script>  
-
+  </script> 
+  
 </body>
 
 </html>

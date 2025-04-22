@@ -1,9 +1,11 @@
-from flask import Flask, render_template, Response, jsonify
+from flask import Flask, render_template, Response, jsonify, request
 import cv2
 from ultralytics import YOLO
 import time
 import serial
 import threading
+import os
+from datetime import datetime
 
 app = Flask(__name__)
 arduino = serial.Serial('/dev/ttyUSB0', 9600)
@@ -23,6 +25,7 @@ sensor_data = {
 status_lampu = {"status": 0}  # 0 = OFF, 1 = ON
 
 model = YOLO("model.pt")
+
 cap1 = cv2.VideoCapture(0)
 cap2 = cv2.VideoCapture(1)
 
@@ -56,13 +59,52 @@ def detect_and_send(frame, cam_id):
                 color = (0, 255, 0)
                 cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2)
 
-    # Update status deteksi per kamera
+    # Simpan snapshot jika ada deteksi
+    if detected:
+        save_snapshot(frame, cam_id)
+
+    # Update status deteksi
     if cam_id == 1:
         deteksi_kutu["kamera1"] = 1 if detected else 0
     elif cam_id == 2:
         deteksi_kutu["kamera2"] = 1 if detected else 0
 
     return frame
+
+# === THREAD: Loop Kamera ===
+def kamera_loop(cap, cam_id):
+    while cap is not None and cap.isOpened():
+        success, frame = cap.read()
+        if success:
+            frame = cv2.resize(frame, (960, 720))
+            detect_and_send(frame, cam_id)
+        time.sleep(0.1)  # batasi beban CPU
+
+SNAPSHOT_DIR = os.path.join('static', 'snapshots')
+os.makedirs(SNAPSHOT_DIR, exist_ok=True)
+for minggu in range(1, 5):
+    for kamera in ['kamera1', 'kamera2']:
+        os.makedirs(os.path.join(SNAPSHOT_DIR, f'minggu{minggu}', kamera), exist_ok=True)
+
+def save_snapshot(frame, cam_id):
+    now = datetime.now()
+    minggu = min(((now.day - 1) // 7) + 1, 4)
+    folder = os.path.join(SNAPSHOT_DIR, f'minggu{minggu}', f'kamera{cam_id}')
+    filename = f"cam{cam_id}_{now.strftime('%Y%m%d_%H%M%S')}.jpg"
+    cv2.imwrite(os.path.join(folder, filename), frame)
+
+def cleanup_snapshots():
+    while True:
+        now = datetime.now()
+        if now.day == 1 and now.hour == 0:
+            for i in range(1, 5):
+                folder = os.path.join(SNAPSHOT_DIR, f'minggu{i}')
+                for file in os.listdir(folder):
+                    path = os.path.join(folder, file)
+                    if os.path.isfile(path):
+                        os.remove(path)
+            print("[Cleanup] Snapshot dibersihkan karena awal bulan")
+        time.sleep(3600)  # cek setiap jam
 
 # === THREAD: Kontrol Relay (gabungan status kamera 1 dan 2) ===
 def kontrol_relay():
@@ -129,9 +171,16 @@ def read_serial_data():
         except Exception as e:
             print(f"[SerialError] {e}")
 
+# === THREAD: Loop Kamera ===
+if cap1:
+    threading.Thread(target=kamera_loop, args=(cap1, 1), daemon=True).start()
+if cap2:
+    threading.Thread(target=kamera_loop, args=(cap2, 2), daemon=True).start()
+
 # === Jalankan Thread ===
 threading.Thread(target=read_serial_data, daemon=True).start()
 threading.Thread(target=kontrol_relay, daemon=True).start()
+threading.Thread(target=cleanup_snapshots, daemon=True).start()
 
 # === ROUTES ===
 @app.route('/video1')
@@ -150,15 +199,35 @@ def video2():
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    query = request.args.get('query')
+    return render_template('index.html', query=query)
 
 @app.route('/kontrol')
 def kontrol():
-    return render_template('kontrol.html')
+    query = request.args.get('query')
+    return render_template('kontrol.html', query=query)
+
+@app.route('/riwayat')
+def riwayat():
+    query = request.args.get('query', '').lower()
+    snapshot_base = os.path.join('static', 'snapshots')
+    data = {}
+    for minggu in range(1, 5):
+        minggu_key = f'minggu{minggu}'
+        data[minggu_key] = {
+            'kamera1': [],
+            'kamera2': []
+        }
+        for kamera in ['kamera1', 'kamera2']:
+            folder = os.path.join(snapshot_base, minggu_key, kamera)
+            if os.path.exists(folder):
+                data[minggu_key][kamera] = sorted(os.listdir(folder))
+    return render_template('riwayat.html', snapshots=data, query=query)
 
 @app.route('/profile')
 def profile():
-    return render_template('user-profile.html')
+    query = request.args.get('query')
+    return render_template('user-profile.html', query=query)
 
 @app.route('/sensor_data')
 def get_sensor_data():
